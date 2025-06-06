@@ -22,8 +22,7 @@
 <div class="content-container">
   <h4 class="header-underline mb-2">Edit MITRE ATT&CK</h4>
 
-  <!-- Tabs -->
-  <ul class="nav nav-pills w-100" id="mitre-tabs">
+  <ul class="nav nav-pills w-100" data-behavior="mitre-tabs">
     <li class="nav-item">
       <a href="#" class="nav-link active" data-domain="enterprise"><strong>Enterprise</strong></a>
     </li>
@@ -35,87 +34,47 @@
     </li>
   </ul>
 
-  <div id="issues_editor">
-    <div class="inner note-text-inner">
-      <%= simple_form_for [:mitre, current_project, @issue], method: :patch do |f| %>
-        <div class="mitre-calculator">
+  <%= simple_form_for [:mitre, current_project, @issue], method: :patch do |f| %>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label" for="tactic-select">Tactic</label>
+          <select id="tactic-select" class="form-select" data-type="tactic" data-combobox-config="no-combobox"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="technique-select">Technique</label>
+          <select id="technique-select" class="form-select" data-type="technique" data-combobox-config="no-combobox"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="subtechnique-select">Sub-Technique</label>
+          <select id="subtechnique-select" class="form-select" data-type="subtechnique" data-combobox-config="no-combobox"></select>
+        </div>
+      </div>
 
-          <div class="mitre-columns d-flex w-100">
-            <!-- Left Column -->
-            <div class="left-column">
-
-              <!-- Row: Tactic -->
-              <div class="form-row">
-                <div class="form-label">Tactic:</div>
-                <div class="form-input">
-                  <select id="tactic-select" class="form-select"></select>
-                </div>
-                <div class="form-action">
-                  <button type="button" class="btn btn-primary add-button" data-type="tactic">Add</button>
-                </div>
-              </div>
-
-              <!-- Row: Technique -->
-              <div class="form-row">
-                <div class="form-label">Technique:</div>
-                <div class="form-input">
-                  <select id="technique-select" class="form-select"></select>
-                </div>
-                <div class="form-action">
-                  <button type="button" class="btn btn-primary add-button" data-type="technique">Add</button>
-                </div>
-              </div>
-
-              <!-- Row: Sub-Technique -->
-              <div class="form-row">
-                <div class="form-label">Sub-Technique:</div>
-                <div class="form-input">
-                  <select id="subtechnique-select" class="form-select"></select>
-                </div>
-                <div class="form-action">
-                  <button type="button" class="btn btn-primary add-button" data-type="subtechnique">Add</button>
-                </div>
-              </div>
-
-              <hr class="my-1">
-
-              <!-- Row: Style + Clear -->
-              <div class="form-row">
-                <div class="form-label">Style:</div>
-                <div class="form-input">
-                  <div class="form-check">
-                    <%= radio_button_tag :style, 'inline', true, class: 'form-check-input', id: 'style_inline' %>
-                    <label class="form-check-label" for="style_inline">Inline</label>
-                  </div>
-                  <div class="form-check">
-                    <%= radio_button_tag :style, 'list', false, class: 'form-check-input', id: 'style_list' %>
-                    <label class="form-check-label" for="style_list">List</label>
-                  </div>
-                </div>
-                <div class="form-action">
-                  <button type="button" class="btn btn-primary clear-button">Clear</button>
-                </div>
-              </div>
-
-              <!-- Row: Submit / Cancel -->
-              <div class="form-actions mt-2">
-                <%= f.button :submit, nil, class: 'btn btn-primary' %> or
-                <%= link_to 'Cancel', main_app.project_issue_path(current_project, @issue), class: 'cancel-link' %>
-              </div>
-
-            </div> <!-- /left-column -->
-
-            <!-- Right Column -->
-            <div class="right-column">
-              <div class="form-row">
-                <%= text_area_tag :mitre_fields, @issue_fields, id: 'mitre-output', class: 'form-control' %>
-              </div>
+      <div class="col-md-6">
+        <label for="mitre_fields" class="form-label">Result</label>
+        <%= text_area_tag :mitre_fields, @issue_fields, rows: 10, class: 'form-control', data: { behavior: 'mitre-output' } %>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <div>
+            <span class="form-label me-2">Result Format:</span>
+            <div class="form-check form-check-inline">
+              <%= radio_button_tag :result_format, 'inline', true, class: 'form-check-input', id: 'result_format_inline' %>
+              <label class="form-check-label" for="result_format_inline">Inline</label>
             </div>
+            <div class="form-check form-check-inline">
+              <%= radio_button_tag :result_format, 'list', false, class: 'form-check-input', id: 'result_format_list' %>
+              <label class="form-check-label" for="result_format_list">List</label>
+            </div>
+          </div>
 
-          </div> <!-- /d-flex -->
+          <button type="button" class="btn btn-danger" data-behavior="clear">Clear Result</button>
 
-        </div> <!-- /mitre-calculator -->
-      <% end %>
+        </div>
+      </div>
     </div>
-  </div>
+    <div class="form-actions mt-2">
+      <%= f.button :submit, nil, class: 'btn btn-primary' %> or
+      <%= link_to 'Cancel', main_app.project_issue_path(current_project, @issue), class: 'cancel-link' %>
+    </div>
+  <% end %>
 </div>
