@@ -1,231 +1,362 @@
-let mitreData = {};
-let activeDomain = 'enterprise';
+document.addEventListener('turbo:load', () => {
+  if (!document.querySelector('body.dradis-plugins-calculators-mitre-issues')) {
+    return;
+  }
 
-// === Init ===
+  class MitreCalculator {
+    constructor() {
+      this.elements = {
+        tacticSelect: document.querySelector('[data-type~=tactic]'),
+        techniqueSelect: document.querySelector('[data-type~=technique]'),
+        subtechSelect: document.querySelector('[data-type~=subtechnique]'),
+        textarea: document.querySelector('[data-behavior~=mitre-output]'),
+        tabs: document.querySelectorAll(
+          '[data-behavior~=mitre-tabs] [data-domain]'
+        ),
+        clearButton: document.querySelector('[data-behavior~=clear]'),
+        allSelects: document.querySelectorAll('select[data-type]'),
+        resultFormatRadios: document.querySelectorAll(
+          'input[name="result_format"]'
+        ),
+      };
 
-document.addEventListener('DOMContentLoaded', () => {
-  fetch('/assets/dradis/plugins/calculators/mitre/data/mitre_data.json')
-    .then(response => response.json())
-    .then(data => {
-      mitreData = data;
-      populateTacticDropdown();
-    })
-    .catch(error => {
-      console.error('Failed to load mitre_data.json', error);
-    });
+      this.state = {
+        mitreData: {},
+        activeDomain: 'enterprise',
+      };
 
-  // === Domain switching (Tabs) ===
-  document.querySelectorAll('#mitre-tabs .nav-link').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      e.preventDefault();
-      document.querySelectorAll('#mitre-tabs .nav-link').forEach(el => el.classList.remove('active'));
-      e.target.closest('a').classList.add('active');
-      activeDomain = e.target.closest('a')?.dataset.domain;
-      clearAllDropdowns();
-      populateTacticDropdown();
-    });
-  });
+      this.constants = {
+        HEADER_MAP: {
+          tactic: 'tactics',
+          technique: 'technique',
+          subtechnique: 'sub-technique',
+        },
+        DEFAULT_TEXTAREA_CONTENT: [
+          '#[MITRE.tactics]#',
+          'N/A',
+          '',
+          '#[MITRE.technique]#',
+          'N/A',
+          '',
+          '#[MITRE.sub-technique]#',
+          'N/A',
+        ].join('\n'),
+      };
 
-  // === Clear button ===
-  document.querySelector('.clear-button')?.addEventListener('click', () => {
-    const textarea = document.getElementById('mitre-output');
-    textarea.value = [
-      '#[MITRE.tactics]#',
-      'N/A',
-      '',
-      '#[MITRE.technique]#',
-      'N/A',
-      '',
-      '#[MITRE.sub-technique]#',
-      'N/A'
-    ].join('\n');
-  });
+      this.init();
+    }
 
-  // === Add buttons (Tactic / Technique / Sub-technique) ===
-  document.querySelectorAll('button[data-type]').forEach(button => {
-    button.addEventListener('click', () => {
-      const type = button.dataset.type;
-      const select = document.getElementById(`${type}-select`);
-      const value = select?.selectedOptions[0]?.textContent;
-      const style = document.querySelector('input[name="style"]:checked')?.value || 'inline';
-
-      if (value) {
-        addValueToTextarea(type, value, style);
+    async init() {
+      try {
+        await this.loadMitreData();
+        this.bindEvents();
+        this.populateTacticDropdown();
+      } catch (error) {
+        console.error('Failed to initialize MITRE Calculator:', error);
       }
-    });
-  });
-});
+    }
 
-// === Clear dropdowns and disable buttons ===
+    async loadMitreData() {
+      const response = await fetch(
+        '/assets/dradis/plugins/calculators/mitre/data/mitre_data.json'
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      this.state.mitreData = await response.json();
+    }
 
-function clearAllDropdowns() {
-  document.getElementById('tactic-select').innerHTML = '';
-  document.getElementById('technique-select').innerHTML = '';
-  document.getElementById('subtechnique-select').innerHTML = '';
+    bindEvents() {
+      this.bindTabEvents();
+      this.bindClearEvent();
+      this.bindSelectEvents();
+      this.bindResultFormatEvents();
+    }
 
-  document.getElementById('technique-select').disabled = true;
-  document.getElementById('subtechnique-select').disabled = true;
-
-  document.querySelector('button[data-type="technique"]').disabled = true;
-  document.querySelector('button[data-type="subtechnique"]').disabled = true;
-}
-
-// === Populate Tactic Dropdown ===
-
-function populateTacticDropdown() {
-  const tacticSelect = document.getElementById('tactic-select');
-  clearAllDropdowns();
-  const domainTactics = mitreData[activeDomain]?.tactics || [];
-
-  domainTactics.forEach(tactic => {
-    const option = document.createElement('option');
-    option.value = tactic.name;
-    option.textContent = tactic.name;
-    tacticSelect.appendChild(option);
-  });
-
-  tacticSelect.addEventListener('change', populateTechniqueDropdown);
-
-  if (tacticSelect.options.length > 0) {
-    tacticSelect.selectedIndex = 0;
-    populateTechniqueDropdown();
-  }
-}
-
-// === Populate Technique Dropdown ===
-
-function populateTechniqueDropdown() {
-  const techniqueSelect = document.getElementById('technique-select');
-  const techniqueAddBtn = document.querySelector('button[data-type="technique"]');
-  const subtechSelect = document.getElementById('subtechnique-select');
-  const subtechAddBtn = document.querySelector('button[data-type="subtechnique"]');
-
-  techniqueSelect.innerHTML = '';
-  techniqueSelect.disabled = true;
-  techniqueAddBtn.disabled = true;
-
-  subtechSelect.innerHTML = '';
-  subtechSelect.disabled = true;
-  subtechAddBtn.disabled = true;
-
-  const tacticSelect = document.getElementById('tactic-select');
-  const selectedTacticName = tacticSelect.value;
-  const tactic = mitreData[activeDomain]?.tactics.find(t => t.name === selectedTacticName);
-  if (!tactic) return;
-
-  const techniques = tactic.techniques || [];
-  if (techniques.length === 0) return;
-
-  techniques.forEach(technique => {
-    const option = document.createElement('option');
-    option.value = technique.name;
-    option.textContent = technique.name;
-    techniqueSelect.appendChild(option);
-  });
-
-  techniqueSelect.disabled = false;
-  techniqueAddBtn.disabled = false;
-
-  techniqueSelect.addEventListener('change', populateSubtechniqueDropdown);
-
-  if (techniqueSelect.options.length > 0) {
-    techniqueSelect.selectedIndex = 0;
-    populateSubtechniqueDropdown();
-  }
-}
-
-// === Populate Sub-technique Dropdown ===
-
-function populateSubtechniqueDropdown() {
-  const subtechSelect = document.getElementById('subtechnique-select');
-  const subtechAddBtn = document.querySelector('button[data-type="subtechnique"]');
-
-  subtechSelect.innerHTML = '';
-  subtechSelect.disabled = true;
-  subtechAddBtn.disabled = true;
-
-  const techniqueSelect = document.getElementById('technique-select');
-  const selectedTechniqueName = techniqueSelect.value;
-
-  const tacticSelect = document.getElementById('tactic-select');
-  const selectedTacticName = tacticSelect.value;
-
-  const tactic = mitreData[activeDomain]?.tactics.find(t => t.name === selectedTacticName);
-  if (!tactic) return;
-
-  const technique = tactic.techniques.find(tech => tech.name === selectedTechniqueName);
-  if (!technique) return;
-
-  const subtechniques = technique.subtechniques || [];
-  if (subtechniques.length === 0) return;
-
-  subtechSelect.disabled = false;
-  subtechAddBtn.disabled = false;
-
-  subtechniques.forEach(sub => {
-    const option = document.createElement('option');
-    option.value = sub.name;
-    option.textContent = sub.name;
-    subtechSelect.appendChild(option);
-  });
-}
-
-// === Add Selected Value to Textarea ===
-
-function addValueToTextarea(type, value, style) {
-  const textarea = document.getElementById('mitre-output');
-  const lines = textarea.value.split('\n');
-
-  const headerMap = {
-    tactic: 'tactics',
-    technique: 'technique',
-    subtechnique: 'sub-technique'
-  };
-  const sectionHeader = `#[MITRE.${headerMap[type]}]#`;
-
-  const headerIndex = lines.findIndex(line => line.trim() === sectionHeader);
-  if (headerIndex === -1) return;
-
-  const values = [];
-  let endIndex = headerIndex + 1;
-
-  while (endIndex < lines.length && !lines[endIndex].startsWith('#[')) {
-    const line = lines[endIndex].trim();
-    if (line && line !== 'N/A') {
-      line.split(',').forEach(item => {
-        const trimmed = item.trim();
-        if (trimmed) values.push(trimmed);
+    bindTabEvents() {
+      this.elements.tabs.forEach((tab) => {
+        tab.addEventListener('click', this.handleTabClick.bind(this));
       });
     }
-    endIndex++;
+
+    bindClearEvent() {
+      this.elements.clearButton?.addEventListener('click', () => {
+        this.elements.textarea.value = this.constants.DEFAULT_TEXTAREA_CONTENT;
+      });
+    }
+
+    bindSelectEvents() {
+      this.elements.allSelects.forEach((select) => {
+        select.addEventListener('change', this.handleSelectChange.bind(this));
+      });
+    }
+
+    bindResultFormatEvents() {
+      this.elements.resultFormatRadios.forEach((radio) => {
+        radio.addEventListener(
+          'change',
+          this.handleResultFormatChange.bind(this)
+        );
+      });
+    }
+
+    handleTabClick(event) {
+      event.preventDefault();
+
+      this.elements.tabs.forEach((tab) => tab.classList.remove('active'));
+
+      const clickedTab = event.target.closest('[data-domain]');
+      clickedTab.classList.add('active');
+
+      this.state.activeDomain = clickedTab.dataset.domain;
+
+      this.clearAllDropdowns();
+      this.populateTacticDropdown();
+    }
+
+    handleSelectChange(event) {
+      const select = event.target;
+      const type = select.dataset.type;
+      const selectedOption = select.selectedOptions[0];
+
+      if (!selectedOption || selectedOption.value === '') return;
+
+      const value = selectedOption.textContent;
+      const resultFormat =
+        document.querySelector('input[name="result_format"]:checked')?.value ||
+        'inline';
+
+      if (value) {
+        this.addValueToTextarea(type, value, resultFormat);
+      }
+    }
+
+    handleResultFormatChange() {
+      this.reformatAllSections();
+    }
+
+    clearAllDropdowns() {
+      const { tacticSelect, techniqueSelect, subtechSelect } = this.elements;
+
+      [tacticSelect, techniqueSelect, subtechSelect].forEach((select) => {
+        select.innerHTML = '';
+      });
+
+      techniqueSelect.disabled = true;
+      subtechSelect.disabled = true;
+    }
+
+    populateTacticDropdown() {
+      const domainTactics =
+        this.state.mitreData[this.state.activeDomain]?.tactics || [];
+
+      this.clearAllDropdowns();
+
+      if (domainTactics.length === 0) return;
+
+      const promptOption = this.createOption('', 'Select a tactic');
+      this.elements.tacticSelect.appendChild(promptOption);
+
+      domainTactics.forEach((tactic) => {
+        const option = this.createOption(tactic.name, tactic.name);
+        this.elements.tacticSelect.appendChild(option);
+      });
+
+      this.elements.tacticSelect.removeEventListener(
+        'change',
+        this.populateTechniqueDropdown
+      );
+      this.elements.tacticSelect.addEventListener(
+        'change',
+        this.populateTechniqueDropdown.bind(this)
+      );
+    }
+
+    populateTechniqueDropdown() {
+      const { techniqueSelect, subtechSelect, tacticSelect } = this.elements;
+
+      techniqueSelect.innerHTML = '';
+      techniqueSelect.disabled = true;
+      subtechSelect.innerHTML = '';
+      subtechSelect.disabled = true;
+
+      const selectedTacticName = tacticSelect.value;
+      if (!selectedTacticName) return;
+
+      const tactic = this.findTacticByName(selectedTacticName);
+
+      if (!tactic || !tactic.techniques?.length) return;
+
+      // Add prompt option
+      const promptOption = this.createOption('', 'Select a technique');
+      techniqueSelect.appendChild(promptOption);
+
+      tactic.techniques.forEach((technique) => {
+        const option = this.createOption(technique.name, technique.name);
+        techniqueSelect.appendChild(option);
+      });
+
+      techniqueSelect.disabled = false;
+
+      techniqueSelect.removeEventListener(
+        'change',
+        this.populateSubtechniqueDropdown
+      );
+      techniqueSelect.addEventListener(
+        'change',
+        this.populateSubtechniqueDropdown.bind(this)
+      );
+    }
+
+    populateSubtechniqueDropdown() {
+      const { subtechSelect, tacticSelect, techniqueSelect } = this.elements;
+
+      subtechSelect.innerHTML = '';
+      subtechSelect.disabled = true;
+
+      const selectedTacticName = tacticSelect.value;
+      const selectedTechniqueName = techniqueSelect.value;
+
+      if (!selectedTechniqueName) return;
+
+      const tactic = this.findTacticByName(selectedTacticName);
+      if (!tactic) return;
+
+      const technique = tactic.techniques?.find(
+        (tech) => tech.name === selectedTechniqueName
+      );
+      if (!technique || !technique.subtechniques?.length) return;
+
+      const promptOption = this.createOption('', 'Select a sub-technique');
+      subtechSelect.appendChild(promptOption);
+
+      technique.subtechniques.forEach((subtechnique) => {
+        const option = this.createOption(subtechnique.name, subtechnique.name);
+        subtechSelect.appendChild(option);
+      });
+
+      subtechSelect.disabled = false;
+    }
+
+    findTacticByName(tacticName) {
+      return this.state.mitreData[this.state.activeDomain]?.tactics?.find(
+        (tactic) => tactic.name === tacticName
+      );
+    }
+
+    createOption(value, text) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = text;
+      return option;
+    }
+
+    addValueToTextarea(type, value, resultFormat) {
+      const lines = this.elements.textarea.value.split('\n');
+      const sectionHeader = `#[MITRE.${this.constants.HEADER_MAP[type]}]#`;
+
+      const headerIndex = lines.findIndex(
+        (line) => line.trim() === sectionHeader
+      );
+      if (headerIndex === -1) return;
+
+      const { values, endIndex } = this.extractExistingValues(
+        lines,
+        headerIndex
+      );
+
+      if (!values.includes(value)) {
+        values.push(value);
+      }
+
+      this.replaceSectionInLines(
+        lines,
+        headerIndex,
+        endIndex,
+        values,
+        resultFormat
+      );
+
+      this.elements.textarea.value = lines.join('\n');
+    }
+
+    reformatAllSections() {
+      const resultFormat =
+        document.querySelector('input[name="result_format"]:checked')?.value ||
+        'inline';
+      const lines = this.elements.textarea.value.split('\n');
+
+      Object.keys(this.constants.HEADER_MAP).forEach((type) => {
+        const sectionHeader = `#[MITRE.${this.constants.HEADER_MAP[type]}]#`;
+        const headerIndex = lines.findIndex(
+          (line) => line.trim() === sectionHeader
+        );
+
+        if (headerIndex !== -1) {
+          const { values, endIndex } = this.extractExistingValues(
+            lines,
+            headerIndex
+          );
+          this.replaceSectionInLines(
+            lines,
+            headerIndex,
+            endIndex,
+            values,
+            resultFormat
+          );
+        }
+      });
+
+      this.elements.textarea.value = lines.join('\n');
+    }
+
+    extractExistingValues(lines, headerIndex) {
+      const values = [];
+      let endIndex = headerIndex + 1;
+
+      while (endIndex < lines.length && !lines[endIndex].startsWith('#[')) {
+        const line = lines[endIndex].trim();
+        if (line && line !== 'N/A') {
+          line.split(',').forEach((item) => {
+            const trimmed = item.trim();
+            if (trimmed) values.push(trimmed);
+          });
+        }
+        endIndex++;
+      }
+
+      return { values, endIndex };
+    }
+
+    replaceSectionInLines(lines, headerIndex, endIndex, values, resultFormat) {
+      lines.splice(headerIndex + 1, endIndex - headerIndex - 1);
+
+      if (values.length === 0) {
+        lines.splice(headerIndex + 1, 0, 'N/A');
+      } else if (resultFormat === 'inline') {
+        lines.splice(headerIndex + 1, 0, values.join(', '));
+      } else {
+        lines.splice(headerIndex + 1, 0, ...values);
+      }
+
+      this.ensureProperSpacing(lines, headerIndex, values, resultFormat);
+    }
+
+    ensureProperSpacing(lines, headerIndex, values, resultFormat) {
+      const afterIndex =
+        headerIndex +
+        1 +
+        (resultFormat === 'inline' || values.length === 0 ? 1 : values.length);
+
+      if (lines[afterIndex] !== '') {
+        lines.splice(afterIndex, 0, '');
+      }
+
+      while (lines[afterIndex + 1] === '') {
+        lines.splice(afterIndex + 1, 1);
+      }
+    }
   }
 
-  if (!values.includes(value)) {
-    values.push(value);
-  }
-
-  lines.splice(headerIndex + 1, endIndex - headerIndex - 1);
-
-  if (values.length === 0) {
-    lines.splice(headerIndex + 1, 0, 'N/A');
-  } else if (style === 'inline') {
-    lines.splice(headerIndex + 1, 0, values.join(', '));
-  } else {
-    lines.splice(headerIndex + 1, 0, ...values);
-  }
-
-  let afterIndex = headerIndex + 1 + values.length;
-  if (style === 'inline' || values.length === 0) {
-    afterIndex = headerIndex + 2;
-  }
-
-  if (lines[afterIndex] !== '') {
-    lines.splice(afterIndex, 0, '');
-  }
-
-  while (lines[afterIndex + 1] === '') {
-    lines.splice(afterIndex + 1, 1);
-  }
-
-  textarea.value = lines.join('\n');
-}
+  new MitreCalculator();
+});
