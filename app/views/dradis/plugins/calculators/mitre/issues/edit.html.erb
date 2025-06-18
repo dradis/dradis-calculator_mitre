@@ -24,52 +24,68 @@
 
   <ul class="nav nav-pills w-100" data-behavior="mitre-tabs">
     <li class="nav-item">
-      <a href="#" class="nav-link active" data-domain="enterprise"><strong>Enterprise</strong></a>
+      <a href="#enterprise" class="nav-link active" data-bs-toggle="tab"><strong>Enterprise</strong></a>
     </li>
     <li class="nav-item">
-      <a href="#" class="nav-link" data-domain="mobile"><strong>Mobile</strong></a>
+      <a href="#mobile" class="nav-link" data-bs-toggle="tab"><strong>Mobile</strong></a>
     </li>
     <li class="nav-item">
-      <a href="#" class="nav-link" data-domain="ics"><strong>ICS</strong></a>
+      <a href="#ics" class="nav-link" data-bs-toggle="tab"><strong>ICS</strong></a>
     </li>
   </ul>
 
   <%= simple_form_for [:mitre, current_project, @issue], method: :patch do |f| %>
     <div class="row mt-3">
       <div class="col-md-6">
-        <div class="mb-3">
-          <label class="form-label" for="tactic-select">Tactic</label>
-          <select id="tactic-select" class="form-select" data-type="tactic" data-combobox-config="no-combobox"></select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="technique-select">Technique</label>
-          <select id="technique-select" class="form-select" data-type="technique" data-combobox-config="no-combobox"></select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="subtechnique-select">Sub-Technique</label>
-          <select id="subtechnique-select" class="form-select" data-type="subtechnique" data-combobox-config="no-combobox"></select>
+        <div class="tab-content">
+          <div id="enterprise" class="tab-pane active show">
+            <div class="mb-3">
+              <label class="form-label" for="enterprise-tactic-select">Enterprise Tactic</label>
+              <select id="enterprise-tactic-select" class="form-select" data-type="enterprise-tactic" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="enterprise-technique-select">Enterprise Technique</label>
+              <select id="enterprise-technique-select" class="form-select" data-type="enterprise-technique" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="enterprise-subtechnique-select">Enterprise Sub-Technique</label>
+              <select id="enterprise-subtechnique-select" class="form-select" data-type="enterprise-subtechnique" data-combobox-config="no-combobox"></select>
+            </div>
+          </div>
+          <div id="mobile" class="tab-pane">
+            <div class="mb-3">
+              <label class="form-label" for="mobile-tactic-select">Mobile Tactic</label>
+              <select id="mobile-tactic-select" class="form-select" data-type="mobile-tactic" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="mobile-technique-select">Mobile Technique</label>
+              <select id="mobile-technique-select" class="form-select" data-type="mobile-technique" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="mobile-subtechnique-select">Mobile Sub-Technique</label>
+              <select id="mobile-subtechnique-select" class="form-select" data-type="mobile-subtechnique" data-combobox-config="no-combobox"></select>
+            </div>
+          </div>
+          <div id="ics" class="tab-pane">
+            <div class="mb-3">
+              <label class="form-label" for="ics-tactic-select">ICS Tactic</label>
+              <select id="ics-tactic-select" class="form-select" data-type="ics-tactic" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="ics-technique-select">ICS Technique</label>
+              <select id="ics-technique-select" class="form-select" data-type="ics-technique" data-combobox-config="no-combobox"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="ics-subtechnique-select">ICS Sub-Technique</label>
+              <select id="ics-subtechnique-select" class="form-select" data-type="ics-subtechnique" data-combobox-config="no-combobox"></select>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="col-md-6">
         <label for="mitre_fields" class="form-label">Result</label>
         <%= text_area_tag :mitre_fields, @issue_fields, rows: 10, class: 'form-control', data: { behavior: 'mitre-output' } %>
-        <div class="d-flex justify-content-between align-items-center mt-2">
-          <div>
-            <span class="form-label me-2">Result Format:</span>
-            <div class="form-check form-check-inline">
-              <%= radio_button_tag :result_format, 'inline', true, class: 'form-check-input', id: 'result_format_inline' %>
-              <label class="form-check-label" for="result_format_inline">Inline</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <%= radio_button_tag :result_format, 'list', false, class: 'form-check-input', id: 'result_format_list' %>
-              <label class="form-check-label" for="result_format_list">List</label>
-            </div>
-          </div>
-
-          <button type="button" class="btn btn-danger" data-behavior="clear">Clear Result</button>
-
-        </div>
       </div>
     </div>
     <div class="form-actions mt-2">
