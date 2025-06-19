@@ -6,6 +6,7 @@ document.addEventListener('turbo:load', () => {
     constructor() {
       this.matrices = ['enterprise', 'mobile', 'ics'];
       this.mitreData = {};
+      this.result = document.querySelector('[data-behavior="mitre-result"]');
       this.selects = {};
       this.init();
     }
@@ -15,7 +16,7 @@ document.addEventListener('turbo:load', () => {
         await this.loadMitreData();
         this.initializeSelectors();
         this.setupEventListeners();
-        this.preSelectFromTextarea();
+        this.preSelectFromResult();
       } catch (error) {
         console.error('Failed to initialize MITRE Calculator:', error);
       }
@@ -141,7 +142,7 @@ document.addEventListener('turbo:load', () => {
       this.updateSubtechniqueResults(matrix, selectedSubtechnique);
     }
 
-    preSelectFromTextarea() {
+    preSelectFromResult() {
       this.matrices.forEach((matrix) => {
         this.preSelectMatrix(matrix);
       });
@@ -188,14 +189,11 @@ document.addEventListener('turbo:load', () => {
     }
 
     getResultValue(label) {
-      const textarea = document.querySelector('[data-behavior="mitre-result"]');
-      if (!textarea) return null;
-
       const regex = new RegExp(
         `\\#\\[${this.escapeRegex(label)}\\]\\#\\n(.*?)(?=\\n|$)`,
         'i'
       );
-      const match = textarea.value.match(regex);
+      const match = this.result.value.match(regex);
       return match ? match[1].trim() : null;
     }
 
@@ -235,9 +233,8 @@ document.addEventListener('turbo:load', () => {
     }
 
     updateResult(label, value) {
-      const textarea = document.querySelector('[data-behavior="mitre-result"]');
       const regex = new RegExp(`(\\#\\[${label}\\]\\#\\n)(.*?)(\\n|$)`, 'gi');
-      textarea.value = textarea.value.replace(regex, `$1${value}$3`);
+      this.result.value = this.result.value.replace(regex, `$1${value}$3`);
     }
 
     updateTacticResults(matrix, tactic) {
