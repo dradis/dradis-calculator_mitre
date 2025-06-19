@@ -4,6 +4,7 @@ document.addEventListener('turbo:load', () => {
 
   class MitreCalculator {
     constructor() {
+      this.matrices = ['enterprise', 'mobile', 'ics'];
       this.mitreData = {};
       this.selects = {};
       this.init();
@@ -14,6 +15,7 @@ document.addEventListener('turbo:load', () => {
         await this.loadMitreData();
         this.initializeSelectors();
         this.setupEventListeners();
+        this.preSelectFromTextarea();
       } catch (error) {
         console.error('Failed to initialize MITRE Calculator:', error);
       }
@@ -29,9 +31,7 @@ document.addEventListener('turbo:load', () => {
     }
 
     initializeSelectors() {
-      const matrices = ['enterprise', 'mobile', 'ics'];
-
-      matrices.forEach((matrix) => {
+      this.matrices.forEach((matrix) => {
         const tacticSelect = document.querySelector(
           `select[data-type="${matrix}-tactic"]`
         );
@@ -70,62 +70,146 @@ document.addEventListener('turbo:load', () => {
     }
 
     setupEventListeners() {
-      const matrices = ['enterprise', 'mobile', 'ics'];
-
-      matrices.forEach((matrix) => {
+      this.matrices.forEach((matrix) => {
         const { tactic, technique, subtechnique } = this.selects[matrix];
 
         tactic.addEventListener('change', () => {
-          const selectedTactic = this.mitreData[matrix].tactics.find(
-            (t) => t.id === tactic.value
-          );
-
-          this.setPrompt(technique, 'Select a technique');
-          this.setPrompt(subtechnique, 'Select a sub-technique');
-          technique.disabled = true;
-          subtechnique.disabled = true;
-
-          if (selectedTactic) {
-            this.populateTechniques(selectedTactic, technique);
-            technique.disabled = false;
-          }
-
-          this.updateTacticResults(matrix, selectedTactic);
+          this.handleTacticChange(matrix);
         });
 
         technique.addEventListener('change', () => {
-          const selectedTactic = this.mitreData[matrix].tactics.find(
-            (t) => t.id === tactic.value
-          );
-          const selectedTechnique = selectedTactic.techniques.find(
-            (tech) => tech.id === technique.value
-          );
+          this.handleTechniqueChange(matrix);
+        });
 
-          this.setPrompt(subtechnique, 'Select a sub-technique');
-          subtechnique.disabled = true;
+        subtechnique.addEventListener('change', () => {
+          this.handleSubtechniqueChange(matrix);
+        });
+      });
+    }
+
+    handleTacticChange(matrix) {
+      const { tactic, technique, subtechnique } = this.selects[matrix];
+      const selectedTactic = this.mitreData[matrix].tactics.find(
+        (t) => t.id === tactic.value
+      );
+
+      this.setPrompt(technique, 'Select a technique');
+      this.setPrompt(subtechnique, 'Select a sub-technique');
+      technique.disabled = true;
+      subtechnique.disabled = true;
+
+      if (selectedTactic) {
+        this.populateTechniques(selectedTactic, technique);
+        technique.disabled = false;
+      }
+
+      this.updateTacticResults(matrix, selectedTactic);
+    }
+
+    handleTechniqueChange(matrix) {
+      const { tactic, technique, subtechnique } = this.selects[matrix];
+      const selectedTactic = this.mitreData[matrix].tactics.find(
+        (t) => t.id === tactic.value
+      );
+      const selectedTechnique = selectedTactic.techniques.find(
+        (tech) => tech.id === technique.value
+      );
+
+      this.setPrompt(subtechnique, 'Select a sub-technique');
+      subtechnique.disabled = true;
+
+      if (selectedTechnique.subtechniques.length > 0) {
+        this.populateSubtechniques(selectedTechnique, subtechnique);
+        subtechnique.disabled = false;
+      }
+
+      this.updateTechniqueResults(matrix, selectedTechnique);
+    }
+
+    handleSubtechniqueChange(matrix) {
+      const { tactic, technique, subtechnique } = this.selects[matrix];
+      const selectedTactic = this.mitreData[matrix].tactics.find(
+        (t) => t.id === tactic.value
+      );
+      const selectedTechnique = selectedTactic.techniques.find(
+        (tech) => tech.id === technique.value
+      );
+      const selectedSubtechnique = selectedTechnique.subtechniques.find(
+        (s) => s.id === subtechnique.value
+      );
+
+      this.updateSubtechniqueResults(matrix, selectedSubtechnique);
+    }
+
+    preSelectFromTextarea() {
+      this.matrices.forEach((matrix) => {
+        this.preSelectMatrix(matrix);
+      });
+    }
+
+    preSelectMatrix(matrix) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      const tacticId = this.getResultValue(`${base}.Tactic.ID`);
+
+      if (!tacticId || tacticId === 'N/A') return;
+
+      const { tactic, technique, subtechnique } = this.selects[matrix];
+
+      if (this.selectOption(tactic, tacticId)) {
+        const selectedTactic = this.mitreData[matrix].tactics.find(
+          (t) => t.id === tacticId
+        );
+        this.populateTechniques(selectedTactic, technique);
+        technique.disabled = false;
+
+        const techniqueId = this.getResultValue(`${base}.Technique.ID`);
+        if (
+          techniqueId &&
+          techniqueId !== 'N/A' &&
+          this.selectOption(technique, techniqueId)
+        ) {
+          const selectedTechnique = selectedTactic.techniques.find(
+            (t) => t.id === techniqueId
+          );
 
           if (selectedTechnique.subtechniques.length > 0) {
             this.populateSubtechniques(selectedTechnique, subtechnique);
             subtechnique.disabled = false;
+
+            const subtechniqueId = this.getResultValue(
+              `${base}.Sub-technique.ID`
+            );
+            if (subtechniqueId && subtechniqueId !== 'N/A') {
+              this.selectOption(subtechnique, subtechniqueId);
+            }
           }
+        }
+      }
+    }
 
-          this.updateTechniqueResults(matrix, selectedTechnique);
-        });
+    getResultValue(label) {
+      const textarea = document.querySelector('[data-behavior="mitre-result"]');
+      if (!textarea) return null;
 
-        subtechnique.addEventListener('change', () => {
-          const selectedTactic = this.mitreData[matrix].tactics.find(
-            (t) => t.id === tactic.value
-          );
-          const selectedTechnique = selectedTactic.techniques.find(
-            (tech) => tech.id === technique.value
-          );
-          const selectedSubtechnique = selectedTechnique.subtechniques.find(
-            (s) => s.id === subtechnique.value
-          );
+      const regex = new RegExp(
+        `\\#\\[${this.escapeRegex(label)}\\]\\#\\n(.*?)(?=\\n|$)`,
+        'i'
+      );
+      const match = textarea.value.match(regex);
+      return match ? match[1].trim() : null;
+    }
 
-          this.updateSubtechniqueResults(matrix, selectedSubtechnique);
-        });
-      });
+    selectOption(select, value) {
+      const option = select.querySelector(`option[value="${value}"]`);
+      if (option) {
+        select.value = value;
+        return true;
+      }
+      return false;
+    }
+
+    escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     setPrompt(select, prompt) {
