@@ -5,6 +5,7 @@ document.addEventListener('turbo:load', () => {
   class MitreCalculator {
     constructor() {
       this.mitreData = {};
+      this.selects = {};
       this.init();
     }
 
@@ -29,6 +30,7 @@ document.addEventListener('turbo:load', () => {
 
     initializeSelectors() {
       const matrices = ['enterprise', 'mobile', 'ics'];
+
       matrices.forEach((matrix) => {
         const tacticSelect = document.querySelector(
           `select[data-type="${matrix}-tactic"]`
@@ -40,101 +42,111 @@ document.addEventListener('turbo:load', () => {
           `select[data-type="${matrix}-subtechnique"]`
         );
 
-        this.setPrompt(tacticSelect, 'Select a tactic');
-        this.setPrompt(techniqueSelect, 'Select a technique');
-        this.setPrompt(subtechniqueSelect, 'Select a sub-technique');
-        techniqueSelect.disabled = true;
-        subtechniqueSelect.disabled = true;
+        this.selects[matrix] = {
+          tactic: tacticSelect,
+          technique: techniqueSelect,
+          subtechnique: subtechniqueSelect,
+        };
 
-        this.mitreData[matrix].tactics.forEach((tactic) => {
-          const option = document.createElement('option');
-          option.value = tactic.id;
-          option.textContent = tactic.name;
-          tacticSelect.appendChild(option);
-        });
+        this.setupMatrix(matrix);
+      });
+    }
+
+    setupMatrix(matrix) {
+      const { tactic, technique, subtechnique } = this.selects[matrix];
+
+      this.setPrompt(tactic, 'Select a tactic');
+      this.setPrompt(technique, 'Select a technique');
+      this.setPrompt(subtechnique, 'Select a sub-technique');
+      technique.disabled = true;
+      subtechnique.disabled = true;
+
+      this.mitreData[matrix].tactics.forEach((tacticData) => {
+        const option = document.createElement('option');
+        option.value = tacticData.id;
+        option.textContent = tacticData.name;
+        tactic.appendChild(option);
       });
     }
 
     setupEventListeners() {
       const matrices = ['enterprise', 'mobile', 'ics'];
-      matrices.forEach((matrix) => {
-        const tacticSelect = document.querySelector(
-          `select[data-type="${matrix}-tactic"]`
-        );
-        const techniqueSelect = document.querySelector(
-          `select[data-type="${matrix}-technique"]`
-        );
-        const subtechniqueSelect = document.querySelector(
-          `select[data-type="${matrix}-subtechnique"]`
-        );
 
-        tacticSelect.addEventListener('change', () => {
+      matrices.forEach((matrix) => {
+        const { tactic, technique, subtechnique } = this.selects[matrix];
+
+        tactic.addEventListener('change', () => {
           const selectedTactic = this.mitreData[matrix].tactics.find(
-            (t) => t.id === tacticSelect.value
+            (t) => t.id === tactic.value
           );
 
-          this.setPrompt(techniqueSelect, 'Select a technique');
-          this.setPrompt(subtechniqueSelect, 'Select a sub-technique');
-          techniqueSelect.disabled = true;
-          subtechniqueSelect.disabled = true;
+          this.setPrompt(technique, 'Select a technique');
+          this.setPrompt(subtechnique, 'Select a sub-technique');
+          technique.disabled = true;
+          subtechnique.disabled = true;
 
           if (selectedTactic) {
-            this.populateTechniques(selectedTactic, techniqueSelect);
-            techniqueSelect.disabled = false;
+            this.populateTechniques(selectedTactic, technique);
+            technique.disabled = false;
           }
+
+          this.updateTacticResults(matrix, selectedTactic);
         });
 
-        techniqueSelect.addEventListener('change', () => {
+        technique.addEventListener('change', () => {
           const selectedTactic = this.mitreData[matrix].tactics.find(
-            (tactic) => tactic.id === tacticSelect.value
+            (t) => t.id === tactic.value
           );
-          const selectedTechnique = selectedTactic?.techniques.find(
-            (technique) => technique.id === techniqueSelect.value
+          const selectedTechnique = selectedTactic.techniques.find(
+            (tech) => tech.id === technique.value
           );
 
-          this.setPrompt(subtechniqueSelect, 'Select a sub-technique');
-          subtechniqueSelect.disabled = true;
+          this.setPrompt(subtechnique, 'Select a sub-technique');
+          subtechnique.disabled = true;
 
-          if (selectedTechnique?.subtechniques.length > 0) {
-            this.populateSubtechniques(selectedTechnique, subtechniqueSelect);
-            subtechniqueSelect.disabled = false;
+          if (selectedTechnique.subtechniques.length > 0) {
+            this.populateSubtechniques(selectedTechnique, subtechnique);
+            subtechnique.disabled = false;
           }
+
+          this.updateTechniqueResults(matrix, selectedTechnique);
         });
 
-        this.bindResultUpdates(
-          matrix,
-          tacticSelect,
-          techniqueSelect,
-          subtechniqueSelect
-        );
+        subtechnique.addEventListener('change', () => {
+          const selectedTactic = this.mitreData[matrix].tactics.find(
+            (t) => t.id === tactic.value
+          );
+          const selectedTechnique = selectedTactic.techniques.find(
+            (tech) => tech.id === technique.value
+          );
+          const selectedSubtechnique = selectedTechnique.subtechniques.find(
+            (s) => s.id === subtechnique.value
+          );
+
+          this.updateSubtechniqueResults(matrix, selectedSubtechnique);
+        });
       });
     }
 
     setPrompt(select, prompt) {
-      select.innerHTML = '';
-      const placeholder = document.createElement('option');
-      placeholder.value = '';
-      placeholder.textContent = prompt;
-      placeholder.disabled = true;
-      placeholder.selected = true;
-      select.appendChild(placeholder);
+      select.innerHTML = `<option value="" disabled selected>${prompt}</option>`;
     }
 
-    populateTechniques(tactic, techniqueSelect) {
+    populateTechniques(tactic, select) {
       tactic.techniques.forEach((tech) => {
         const option = document.createElement('option');
         option.value = tech.id;
         option.textContent = tech.name;
-        techniqueSelect.appendChild(option);
+        select.appendChild(option);
       });
     }
 
-    populateSubtechniques(technique, subtechniqueSelect) {
-      technique.subtechniques.forEach((subtechnique) => {
+    populateSubtechniques(technique, select) {
+      technique.subtechniques.forEach((sub) => {
         const option = document.createElement('option');
-        option.value = subtechnique.id;
-        option.textContent = subtechnique.name;
-        subtechniqueSelect.appendChild(option);
+        option.value = sub.id;
+        option.textContent = sub.name;
+        select.appendChild(option);
       });
     }
 
@@ -144,94 +156,41 @@ document.addEventListener('turbo:load', () => {
       textarea.value = textarea.value.replace(regex, `$1${value}$3`);
     }
 
-    bindResultUpdates(
-      matrix,
-      tacticSelect,
-      techniqueSelect,
-      subtechniqueSelect
-    ) {
-      tacticSelect.addEventListener('change', () => {
-        const tactic = this.mitreData[matrix].tactics.find(
-          (t) => t.id === tacticSelect.value
-        );
+    updateTacticResults(matrix, tactic) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      this.updateResult(`${base}.Tactic`, tactic.name);
+      this.updateResult(`${base}.Tactic.ID`, tactic.id);
+      this.resetTechniqueAndSubtechniqueResults(matrix);
+    }
 
-        if (tactic) {
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Tactic`,
-            tactic.name
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Tactic.ID`,
-            tactic.id
-          );
+    updateTechniqueResults(matrix, technique) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      this.updateResult(`${base}.Technique`, technique.name);
+      this.updateResult(`${base}.Technique.ID`, technique.id);
+      this.resetSubtechniqueResults(matrix);
+    }
 
-          this.updateResult(`MITRE.${this.titleCase(matrix)}.Technique`, 'N/A');
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Technique.ID`,
-            'N/A'
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
-            'N/A'
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
-            'N/A'
-          );
-        }
-      });
+    updateSubtechniqueResults(matrix, subtechnique) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      this.updateResult(`${base}.Sub-technique`, subtechnique.name);
+      this.updateResult(`${base}.Sub-technique.ID`, subtechnique.id);
+    }
 
-      techniqueSelect.addEventListener('change', () => {
-        const tactic = this.mitreData[matrix].tactics.find(
-          (t) => t.id === tacticSelect.value
-        );
-        const technique = tactic?.techniques.find(
-          (t) => t.id === techniqueSelect.value
-        );
+    resetTechniqueAndSubtechniqueResults(matrix) {
+      this.resetTechniqueResults(matrix);
+      this.resetSubtechniqueResults(matrix);
+    }
 
-        if (technique) {
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Technique`,
-            technique.name
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Technique.ID`,
-            technique.id
-          );
+    resetTechniqueResults(matrix) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      this.updateResult(`${base}.Technique`, 'N/A');
+      this.updateResult(`${base}.Technique.ID`, 'N/A');
+    }
 
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
-            'N/A'
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
-            'N/A'
-          );
-        }
-      });
-
-      subtechniqueSelect.addEventListener('change', () => {
-        const tactic = this.mitreData[matrix].tactics.find(
-          (t) => t.id === tacticSelect.value
-        );
-        const technique = tactic?.techniques.find(
-          (t) => t.id === techniqueSelect.value
-        );
-        const subtechnique = technique?.subtechniques.find(
-          (s) => s.id === subtechniqueSelect.value
-        );
-
-        if (subtechnique) {
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
-            subtechnique.name
-          );
-          this.updateResult(
-            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
-            subtechnique.id
-          );
-        }
-      });
+    resetSubtechniqueResults(matrix) {
+      const base = `MITRE.${this.titleCase(matrix)}`;
+      this.updateResult(`${base}.Sub-technique`, 'N/A');
+      this.updateResult(`${base}.Sub-technique.ID`, 'N/A');
     }
 
     titleCase(str) {
