@@ -1,3 +1,5 @@
-<li>
-  <%= link_to 'Risk Calculators - MITRE ATT&CK', mitre_calculator.calculators_mitre_path, class: 'dropdown-item', data: { turbolinks: false } %>
-</li>
+<% if defined?(Dradis::Pro) && !current_user.role?(:contributor) %>
+  <li>
+    <%= link_to 'Risk Calculators - MITRE ATT&CK', mitre_calculator.calculators_mitre_path, class: 'dropdown-item', data: { turbolinks: false } %>
+  </li>
+<% end %>
