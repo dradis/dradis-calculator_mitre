@@ -40,8 +40,6 @@ document.addEventListener('turbo:load', () => {
           `select[data-type="${matrix}-subtechnique"]`
         );
 
-        if (!tacticSelect || !techniqueSelect || !subtechniqueSelect) return;
-
         this.setPrompt(tacticSelect, 'Select a tactic');
         this.setPrompt(techniqueSelect, 'Select a technique');
         this.setPrompt(subtechniqueSelect, 'Select a sub-technique');
@@ -69,8 +67,6 @@ document.addEventListener('turbo:load', () => {
         const subtechniqueSelect = document.querySelector(
           `select[data-type="${matrix}-subtechnique"]`
         );
-
-        if (!tacticSelect || !techniqueSelect || !subtechniqueSelect) return;
 
         tacticSelect.addEventListener('change', () => {
           const selectedTactic = this.mitreData[matrix].tactics.find(
@@ -104,6 +100,13 @@ document.addEventListener('turbo:load', () => {
             subtechniqueSelect.disabled = false;
           }
         });
+
+        this.bindResultUpdates(
+          matrix,
+          tacticSelect,
+          techniqueSelect,
+          subtechniqueSelect
+        );
       });
     }
 
@@ -133,6 +136,106 @@ document.addEventListener('turbo:load', () => {
         option.textContent = subtechnique.name;
         subtechniqueSelect.appendChild(option);
       });
+    }
+
+    updateResult(label, value) {
+      const textarea = document.querySelector('[data-behavior="mitre-result"]');
+      const regex = new RegExp(`(\\#\\[${label}\\]\\#\\n)(.*?)(\\n|$)`, 'gi');
+      textarea.value = textarea.value.replace(regex, `$1${value}$3`);
+    }
+
+    bindResultUpdates(
+      matrix,
+      tacticSelect,
+      techniqueSelect,
+      subtechniqueSelect
+    ) {
+      tacticSelect.addEventListener('change', () => {
+        const tactic = this.mitreData[matrix].tactics.find(
+          (t) => t.id === tacticSelect.value
+        );
+
+        if (tactic) {
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Tactic`,
+            tactic.name
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Tactic.ID`,
+            tactic.id
+          );
+
+          this.updateResult(`MITRE.${this.titleCase(matrix)}.Technique`, 'N/A');
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Technique.ID`,
+            'N/A'
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
+            'N/A'
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
+            'N/A'
+          );
+        }
+      });
+
+      techniqueSelect.addEventListener('change', () => {
+        const tactic = this.mitreData[matrix].tactics.find(
+          (t) => t.id === tacticSelect.value
+        );
+        const technique = tactic?.techniques.find(
+          (t) => t.id === techniqueSelect.value
+        );
+
+        if (technique) {
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Technique`,
+            technique.name
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Technique.ID`,
+            technique.id
+          );
+
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
+            'N/A'
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
+            'N/A'
+          );
+        }
+      });
+
+      subtechniqueSelect.addEventListener('change', () => {
+        const tactic = this.mitreData[matrix].tactics.find(
+          (t) => t.id === tacticSelect.value
+        );
+        const technique = tactic?.techniques.find(
+          (t) => t.id === techniqueSelect.value
+        );
+        const subtechnique = technique?.subtechniques.find(
+          (s) => s.id === subtechniqueSelect.value
+        );
+
+        if (subtechnique) {
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique`,
+            subtechnique.name
+          );
+          this.updateResult(
+            `MITRE.${this.titleCase(matrix)}.Sub-technique.ID`,
+            subtechnique.id
+          );
+        }
+      });
+    }
+
+    titleCase(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
     }
   }
 
