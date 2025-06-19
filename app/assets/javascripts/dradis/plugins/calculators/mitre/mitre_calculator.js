@@ -1,6 +1,5 @@
 document.addEventListener('turbo:load', () => {
-  if (!document.querySelector('body.dradis-plugins-calculators-mitre-issues'))
-    return;
+  if (!document.querySelector('[data-behavior~=mitre-calc]')) return;
 
   class MitreCalculator {
     constructor() {

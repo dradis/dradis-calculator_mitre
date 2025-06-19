@@ -1,0 +1,67 @@
+<div data-behavior="mitre-calc">
+  <ul class="nav nav-pills w-100">
+    <li class="nav-item">
+      <a href="#enterprise" class="nav-link active" data-bs-toggle="tab"><strong>Enterprise</strong></a>
+    </li>
+    <li class="nav-item">
+      <a href="#mobile" class="nav-link" data-bs-toggle="tab"><strong>Mobile</strong></a>
+    </li>
+    <li class="nav-item">
+      <a href="#ics" class="nav-link" data-bs-toggle="tab"><strong>ICS</strong></a>
+    </li>
+  </ul>
+  
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <div class="tab-content">
+        <div id="enterprise" class="tab-pane active show">
+          <div class="mb-4">
+            <label class="form-label" for="enterprise-tactic-select">Enterprise Tactic</label>
+            <select id="enterprise-tactic-select" class="form-select" data-type="enterprise-tactic" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="enterprise-technique-select">Enterprise Technique</label>
+            <select id="enterprise-technique-select" class="form-select" data-type="enterprise-technique" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-1">
+            <label class="form-label" for="enterprise-subtechnique-select">Enterprise Sub-Technique</label>
+            <select id="enterprise-subtechnique-select" class="form-select" data-type="enterprise-subtechnique" data-combobox-config="no-combobox"></select>
+          </div>
+        </div>
+        <div id="mobile" class="tab-pane">
+          <div class="mb-4">
+            <label class="form-label" for="mobile-tactic-select">Mobile Tactic</label>
+            <select id="mobile-tactic-select" class="form-select" data-type="mobile-tactic" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="mobile-technique-select">Mobile Technique</label>
+            <select id="mobile-technique-select" class="form-select" data-type="mobile-technique" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-1">
+            <label class="form-label" for="mobile-subtechnique-select">Mobile Sub-Technique</label>
+            <select id="mobile-subtechnique-select" class="form-select" data-type="mobile-subtechnique" data-combobox-config="no-combobox"></select>
+          </div>
+        </div>
+        <div id="ics" class="tab-pane">
+          <div class="mb-4">
+            <label class="form-label" for="ics-tactic-select">ICS Tactic</label>
+            <select id="ics-tactic-select" class="form-select" data-type="ics-tactic" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="ics-technique-select">ICS Technique</label>
+            <select id="ics-technique-select" class="form-select" data-type="ics-technique" data-combobox-config="no-combobox"></select>
+          </div>
+          <div class="mb-1">
+            <label class="form-label" for="ics-subtechnique-select">ICS Sub-Technique</label>
+            <select id="ics-subtechnique-select" class="form-select" data-type="ics-subtechnique" data-combobox-config="no-combobox"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="col-md-6 d-flex flex-column">
+      <label for="mitre_fields" class="form-label">Result</label>
+      <%= text_area_tag :mitre_fields, @issue_fields, class: 'form-control flex-grow-1', data: { behavior: 'mitre-result' } %>
+    </div>
+  </div>
+</div>

@@ -22,72 +22,8 @@
 <div class="content-container">
   <h4 class="header-underline mb-2">Edit MITRE ATT&CK</h4>
 
-  <ul class="nav nav-pills w-100" data-behavior="mitre-tabs">
-    <li class="nav-item">
-      <a href="#enterprise" class="nav-link active" data-bs-toggle="tab"><strong>Enterprise</strong></a>
-    </li>
-    <li class="nav-item">
-      <a href="#mobile" class="nav-link" data-bs-toggle="tab"><strong>Mobile</strong></a>
-    </li>
-    <li class="nav-item">
-      <a href="#ics" class="nav-link" data-bs-toggle="tab"><strong>ICS</strong></a>
-    </li>
-  </ul>
-
   <%= simple_form_for [:mitre, current_project, @issue], method: :patch do |f| %>
-    <div class="row mt-3">
-      <div class="col-md-6">
-        <div class="tab-content">
-          <div id="enterprise" class="tab-pane active show">
-            <div class="mb-3">
-              <label class="form-label" for="enterprise-tactic-select">Enterprise Tactic</label>
-              <select id="enterprise-tactic-select" class="form-select" data-type="enterprise-tactic" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="enterprise-technique-select">Enterprise Technique</label>
-              <select id="enterprise-technique-select" class="form-select" data-type="enterprise-technique" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="enterprise-subtechnique-select">Enterprise Sub-Technique</label>
-              <select id="enterprise-subtechnique-select" class="form-select" data-type="enterprise-subtechnique" data-combobox-config="no-combobox"></select>
-            </div>
-          </div>
-          <div id="mobile" class="tab-pane">
-            <div class="mb-3">
-              <label class="form-label" for="mobile-tactic-select">Mobile Tactic</label>
-              <select id="mobile-tactic-select" class="form-select" data-type="mobile-tactic" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="mobile-technique-select">Mobile Technique</label>
-              <select id="mobile-technique-select" class="form-select" data-type="mobile-technique" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="mobile-subtechnique-select">Mobile Sub-Technique</label>
-              <select id="mobile-subtechnique-select" class="form-select" data-type="mobile-subtechnique" data-combobox-config="no-combobox"></select>
-            </div>
-          </div>
-          <div id="ics" class="tab-pane">
-            <div class="mb-3">
-              <label class="form-label" for="ics-tactic-select">ICS Tactic</label>
-              <select id="ics-tactic-select" class="form-select" data-type="ics-tactic" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="ics-technique-select">ICS Technique</label>
-              <select id="ics-technique-select" class="form-select" data-type="ics-technique" data-combobox-config="no-combobox"></select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="ics-subtechnique-select">ICS Sub-Technique</label>
-              <select id="ics-subtechnique-select" class="form-select" data-type="ics-subtechnique" data-combobox-config="no-combobox"></select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <label for="mitre_fields" class="form-label">Result</label>
-        <%= text_area_tag :mitre_fields, @issue_fields, rows: 10, class: 'form-control', data: { behavior: 'mitre-result' } %>
-      </div>
-    </div>
+    <%= render 'dradis/plugins/calculators/mitre/base/v1' %>
     <div class="form-actions mt-2">
       <%= f.button :submit, nil, class: 'btn btn-primary' %> or
       <%= link_to 'Cancel', main_app.project_issue_path(current_project, @issue), class: 'cancel-link' %>
