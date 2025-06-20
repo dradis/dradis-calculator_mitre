@@ -188,6 +188,7 @@ document.addEventListener('turbo:load', () => {
     }
 
     getResultValue(label) {
+      // Captures the line with the label and returns its value
       const regex = new RegExp(
         `\\#\\[${this.escapeRegex(label)}\\]\\#\\n(.*?)(?=\\n|$)`,
         'i'
@@ -206,6 +207,7 @@ document.addEventListener('turbo:load', () => {
     }
 
     escapeRegex(string) {
+      // Escapes special characters in a regex string since . and [] have special meanings
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
@@ -232,6 +234,7 @@ document.addEventListener('turbo:load', () => {
     }
 
     updateResult(label, value) {
+      // Captures the line with the label and replaces its value
       const regex = new RegExp(`(\\#\\[${label}\\]\\#\\n)(.*?)(\\n|$)`, 'gi');
       this.result.value = this.result.value.replace(regex, `$1${value}$3`);
     }
