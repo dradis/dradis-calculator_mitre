@@ -8,8 +8,8 @@ module Dradis::Plugins::Calculators::MITRE
 
     initializer 'calculator_mitre.asset_precompile_paths' do |app|
       app.config.assets.precompile += [
-        'dradis/plugins/calculators/mitre/manifests/application.css',
-        'dradis/plugins/calculators/mitre/manifests/application.js',
+        'dradis/plugins/calculators/mitre/base.css',
+        'dradis/plugins/calculators/mitre/base.js',
         'dradis/plugins/calculators/mitre/manifests/hera.css',
         'dradis/plugins/calculators/mitre/manifests/hera.js'
       ]
