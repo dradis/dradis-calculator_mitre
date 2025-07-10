@@ -11,7 +11,8 @@ module Dradis::Plugins::Calculators::MITRE
         'dradis/plugins/calculators/mitre/base.css',
         'dradis/plugins/calculators/mitre/base.js',
         'dradis/plugins/calculators/mitre/manifests/hera.css',
-        'dradis/plugins/calculators/mitre/manifests/hera.js'
+        'dradis/plugins/calculators/mitre/manifests/hera.js',
+        'dradis/plugins/calculators/mitre/mitre_data.json'
       ]
     end
 
