@@ -8,8 +8,8 @@ module Dradis
         end
 
         module VERSION
-          MAJOR = 1
-          MINOR = 0
+          MAJOR = 4
+          MINOR = 16
           TINY = 0
           PRE = nil
 
