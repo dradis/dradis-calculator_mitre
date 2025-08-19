@@ -1,7 +1,8 @@
 module Dradis::Plugins::Calculators::MITRE
   class IssuesController < ::IssuesController
-
     before_action only: :edit
+
+    skip_before_action :remove_unused_state_param
 
     def edit
       @issue_fields = Dradis::Plugins::Calculators::MITRE::V1::FIELDS.map do |field|
