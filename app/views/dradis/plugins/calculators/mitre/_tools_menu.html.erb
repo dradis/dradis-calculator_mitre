@@ -1,4 +1,4 @@
-<% unless defined?(Dradis::Pro) && current_user.role?(:contributor) %>
+<% unless defined?(Dradis::Pro) %>
   <li>
     <%= link_to 'Risk Calculators - MITRE ATT&CK', mitre_calculator.calculators_mitre_path, class: 'dropdown-item', data: { turbolinks: false } %>
   </li>
